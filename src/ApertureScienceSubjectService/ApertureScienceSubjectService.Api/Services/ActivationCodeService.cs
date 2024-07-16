@@ -13,16 +13,28 @@
             return GenerateCode();
         }
 
+        public bool IsActivationCodeValid(string activationCode)
+        {
+            if (!ActivationCodes.TryGetValue(activationCode, out var previousCodeCreationTime))
+            {
+                return false;
+            }
+
+            var timeSpan = DateTime.Now - previousCodeCreationTime;
+
+            return timeSpan.TotalMinutes <= 60;
+        }
+
         private static string GenerateCode()
         {
-            // based on the approximate new test subjects at launch + 10%
+            // based on the approximate number of new test subjects at launch + 10%
             const int maxNumberOfIterations = 5500;
 
             for (var i = 0; i <= maxNumberOfIterations; i++)
             {
                 var code = Rand.Next(MinimumNumberCode, MaximumNumberCode).ToString();
 
-                if (!IsActivationCodeValid(code))
+                if (!CanActivationCodeBeCreated(code))
                 {
                     continue;
                 }
@@ -34,7 +46,7 @@
             return BruteForceNewActivationCode();
         }
 
-        private static bool IsActivationCodeValid(string activationCode)
+        private static bool CanActivationCodeBeCreated(string activationCode)
         {
             if (!ActivationCodes.TryGetValue(activationCode, out var previousCodeCreationTime))
             {
@@ -52,7 +64,7 @@
             {
                 var code = i.ToString();
 
-                if (IsActivationCodeValid(code))
+                if (CanActivationCodeBeCreated(code))
                 {
                     ActivationCodes[code] = DateTime.Now;
                     return code;
