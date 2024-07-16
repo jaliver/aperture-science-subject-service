@@ -1,3 +1,4 @@
+using ApertureScienceSubjectService.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ApertureScienceSubjectService.Api.Controllers
@@ -6,14 +7,19 @@ namespace ApertureScienceSubjectService.Api.Controllers
     [Route("api/activation-code")]
     public class ActivationCodeController : ControllerBase
     {
-        public ActivationCodeController()
+        private readonly IActivationCodeService _activationCodeService;
+
+        public ActivationCodeController(IActivationCodeService activationCodeService)
         {
+            ArgumentNullException.ThrowIfNull(activationCodeService, nameof(activationCodeService));
+
+            _activationCodeService = activationCodeService;
         }
 
         [HttpGet]
         public string Get()
         {
-            throw new NotImplementedException();
+            return _activationCodeService.GetActivationCode();
         }
     }
 }
