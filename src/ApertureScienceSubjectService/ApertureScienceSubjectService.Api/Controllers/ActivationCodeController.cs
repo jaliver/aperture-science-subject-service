@@ -1,3 +1,4 @@
+using ApertureScienceSubjectService.Api.Models;
 using ApertureScienceSubjectService.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,9 +18,9 @@ namespace ApertureScienceSubjectService.Api.Controllers
         }
 
         [HttpGet]
-        public string Get()
+        public async Task<ActivationCodeResponse> Get()
         {
-            return _activationCodeService.GetActivationCode();
+            return await _activationCodeService.GetActivationCode();
         }
     }
 }

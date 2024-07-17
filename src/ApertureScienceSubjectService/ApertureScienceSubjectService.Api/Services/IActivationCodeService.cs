@@ -1,8 +1,10 @@
-﻿namespace ApertureScienceSubjectService.Api.Services
+﻿using ApertureScienceSubjectService.Api.Models;
+
+namespace ApertureScienceSubjectService.Api.Services
 {
     public interface IActivationCodeService
     {
-        string GetActivationCode();
-        bool IsActivationCodeValid(string activationCode);
+        Task<ActivationCodeResponse> GetActivationCode();
+        Task<bool> IsActivationCodeValid(string activationCode);
     }
 }

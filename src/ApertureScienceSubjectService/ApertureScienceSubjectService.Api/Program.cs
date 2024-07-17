@@ -11,7 +11,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton(CreateConfiguration());
-builder.Services.AddSingleton<IActivationCodeService, ActivationCodeService>();
+builder.Services.AddScoped<IActivationCodeService, ActivationCodeService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped(typeof(ICosmosRepository<>), typeof(CosmosRepository<>));
 builder.Services.AddScoped(typeof(ICosmosAdapter<>), typeof(CosmosAdapter<>));

@@ -1,77 +1,58 @@
-﻿namespace ApertureScienceSubjectService.Api.Services
+﻿using ApertureScienceSubjectService.Api.Cosmos;
+using ApertureScienceSubjectService.Api.Models;
+
+namespace ApertureScienceSubjectService.Api.Services
 {
     public class ActivationCodeService : IActivationCodeService
     {
-        private static readonly IDictionary<string, DateTime> ActivationCodes = new Dictionary<string, DateTime>();
+        private readonly ICosmosRepository<ActivationCodeEntity> _activationCodeCosmosRepository;
         private static readonly Random Rand = new();
 
         private const int MinimumNumberCode = 100_000;
         private const int MaximumNumberCode = 999_999;
 
-        public string GetActivationCode()
+        public ActivationCodeService(ICosmosRepository<ActivationCodeEntity> activationCodeCosmosRepository)
         {
-            return GenerateCode();
+            ArgumentNullException.ThrowIfNull(activationCodeCosmosRepository, nameof(activationCodeCosmosRepository));
+
+            _activationCodeCosmosRepository = activationCodeCosmosRepository;
         }
 
-        public bool IsActivationCodeValid(string activationCode)
+        public async Task<ActivationCodeResponse> GetActivationCode()
         {
-            if (!ActivationCodes.TryGetValue(activationCode, out var previousCodeCreationTime))
-            {
-                return false;
-            }
+            var activationCode = await GenerateCode();
 
-            var timeSpan = DateTime.Now - previousCodeCreationTime;
+            var activationCodeEntity = new ActivationCodeEntity(activationCode);
 
-            return timeSpan.TotalMinutes <= 60;
+            var response = await _activationCodeCosmosRepository.AddAsync(activationCodeEntity);
+
+            return ActivationCodeResponse.FromEntity(response);
         }
 
-        private static string GenerateCode()
+        public async Task<bool> IsActivationCodeValid(string activationCode)
         {
-            // based on the approximate number of new test subjects at launch + 10%
-            const int maxNumberOfIterations = 5500;
+            var response = await _activationCodeCosmosRepository.GetAllAsync(x => x.ActivationCode.Equals(activationCode, StringComparison.InvariantCulture));
+            return response.Count > 0;
+        }
+
+        private async Task<string> GenerateCode()
+        {
+            // based on the approximate number of new test subjects at launch times 2
+            const int maxNumberOfIterations = 10_000;
 
             for (var i = 0; i <= maxNumberOfIterations; i++)
             {
-                var code = Rand.Next(MinimumNumberCode, MaximumNumberCode).ToString();
+                var activationCode = Rand.Next(MinimumNumberCode, MaximumNumberCode).ToString();
 
-                if (!CanActivationCodeBeCreated(code))
+                if (await IsActivationCodeValid(activationCode))
                 {
                     continue;
                 }
-
-                ActivationCodes[code] = DateTime.Now;
-                return code;
+                
+                return activationCode;
             }
 
-            return BruteForceNewActivationCode();
-        }
-
-        private static bool CanActivationCodeBeCreated(string activationCode)
-        {
-            if (!ActivationCodes.TryGetValue(activationCode, out var previousCodeCreationTime))
-            {
-                return true;
-            }
-
-            var timeSpan = DateTime.Now - previousCodeCreationTime;
-
-            return timeSpan.TotalMinutes <= 60;
-        }
-
-        private static string BruteForceNewActivationCode()
-        {
-            for (var i = MinimumNumberCode; i <= MaximumNumberCode; i++)
-            {
-                var code = i.ToString();
-
-                if (CanActivationCodeBeCreated(code))
-                {
-                    ActivationCodes[code] = DateTime.Now;
-                    return code;
-                }
-            }
-
-            throw new Exception($"The service does not support more than {MaximumNumberCode - MinimumNumberCode} valid activation codes");
+            throw new Exception($"We have unfortunately run out of activation codes. Please try again in an hour.");
         }
     }
 }

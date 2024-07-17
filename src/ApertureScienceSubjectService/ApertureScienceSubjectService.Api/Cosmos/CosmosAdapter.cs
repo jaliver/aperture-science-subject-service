@@ -1,5 +1,7 @@
 ﻿using ApertureScienceSubjectService.Api.Extensions;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos.Linq;
+using System.Linq.Expressions;
 
 namespace ApertureScienceSubjectService.Api.Cosmos
 {
@@ -18,14 +20,25 @@ namespace ApertureScienceSubjectService.Api.Cosmos
 
         public async Task<T> CreateItemAsync(T entity)
         {
-            var container = await GetContainer();
+            var container = await GetContainerAsync();
 
             var itemResponse = await container.CreateItemAsync(entity);
 
             return itemResponse;
         }
 
-        private async Task<Container> GetContainer()
+        public async Task<ICollection<T>> GetAllAsync(Expression<Func<T, bool>> expression)
+        {
+            var container = await GetContainerAsync();
+
+            var queryable = container.GetItemLinqQueryable<T>();
+            var iterator = queryable.Where(expression).ToFeedIterator();
+            var feedResponse = await iterator.ReadNextAsync();
+
+            return feedResponse.ToList();
+        }
+
+        private async Task<Container> GetContainerAsync()
         {
             var endpoint = _config["Cosmos:Account.Endpoint"];
             var key = _config["Cosmos:Primary.Key"];
@@ -39,9 +52,15 @@ namespace ApertureScienceSubjectService.Api.Cosmos
                 id: databaseName,
                 throughput: 400);
 
-            var container = await database.Database.CreateContainerIfNotExistsAsync(
-                id: _cosmosAttribute.CollectionName,
-                partitionKeyPath: "/id");
+            var containerProperties = new ContainerProperties()
+            {
+                Id = _cosmosAttribute.CollectionName,
+                PartitionKeyPath = "/id",
+                // Expire all documents after 180 days
+                DefaultTimeToLive = 180 * 60 * 60 * 24
+            };
+
+            var container = await database.Database.CreateContainerIfNotExistsAsync(containerProperties);
 
             return container;
         }

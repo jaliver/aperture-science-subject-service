@@ -1,4 +1,6 @@
-﻿namespace ApertureScienceSubjectService.Api.Cosmos
+﻿using System.Linq.Expressions;
+
+namespace ApertureScienceSubjectService.Api.Cosmos
 {
     public class CosmosRepository<T> : ICosmosRepository<T> where T : BaseEntity
     {
@@ -14,6 +16,11 @@
         public async Task<T> AddAsync(T entity)
         {
             return await _cosmosAdapter.CreateItemAsync(entity);
+        }
+
+        public async Task<ICollection<T>> GetAllAsync(Expression<Func<T, bool>> expression)
+        {
+            return await _cosmosAdapter.GetAllAsync(expression);
         }
     }
 }
