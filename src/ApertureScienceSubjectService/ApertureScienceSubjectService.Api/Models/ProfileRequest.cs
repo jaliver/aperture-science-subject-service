@@ -2,10 +2,10 @@
 
 namespace ApertureScienceSubjectService.Api.Models
 {
-    public class ProfileCreateRequestModel
+    public class ProfileRequest
     {
         [Required]
-        public string ActivationCode { get; set; }
+        public required string ActivationCode { get; set; }
 
         [Required]
         [EmailAddress(ErrorMessage = "Invalid email formatting")]
@@ -17,5 +17,12 @@ namespace ApertureScienceSubjectService.Api.Models
 
         [Required]
         public string FullName { get; set; }
+
+        internal static ProfileEntity ToEntity(ProfileRequest profileRequest)
+        {
+            ArgumentNullException.ThrowIfNull(profileRequest, nameof(profileRequest));
+
+            return new ProfileEntity(profileRequest.Email, profileRequest.Password, profileRequest.FullName);
+        }
     }
 }

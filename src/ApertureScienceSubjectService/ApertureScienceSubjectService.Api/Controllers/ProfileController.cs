@@ -1,7 +1,6 @@
 ﻿using ApertureScienceSubjectService.Api.Models;
 using ApertureScienceSubjectService.Api.Services;
 using Microsoft.AspNetCore.Mvc;
-using System.Reflection;
 
 namespace ApertureScienceSubjectService.Api.Controllers
 {
@@ -10,23 +9,28 @@ namespace ApertureScienceSubjectService.Api.Controllers
     public class ProfileController : ControllerBase
     {
         private readonly IActivationCodeService _activationCodeService;
+        private readonly IProfileService _profileService;
 
-        public ProfileController(IActivationCodeService activationCodeService)
+        public ProfileController(IActivationCodeService activationCodeService, IProfileService profileService)
         {
             ArgumentNullException.ThrowIfNull(activationCodeService, nameof(activationCodeService));
+            ArgumentNullException.ThrowIfNull(profileService, nameof(profileService));
 
             _activationCodeService = activationCodeService;
+            _profileService = profileService;
         }
 
         [HttpPost]
-        public IActionResult Create([FromBody] ProfileCreateRequestModel profile)
+        public ActionResult<ProfileResponse> Create([FromBody] ProfileRequest profileRequest)
         {
-            if (!_activationCodeService.IsActivationCodeValid(profile.ActivationCode))
+            if (!_activationCodeService.IsActivationCodeValid(profileRequest.ActivationCode))
             {
-                return BadRequest(new { field = nameof(profile.ActivationCode), message = "Invalid activation code" });
+                return BadRequest(new { field = nameof(profileRequest.ActivationCode), message = "Invalid activation code" });
             }
 
-            throw new NotImplementedException();
+            var profileResponse = _profileService.Create(profileRequest);
+
+            return profileResponse;
         }
     }
 }

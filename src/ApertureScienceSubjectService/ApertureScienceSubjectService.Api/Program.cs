@@ -10,6 +10,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<IActivationCodeService, ActivationCodeService>();
+builder.Services.AddSingleton<IProfileService, ProfileService>();
 
 var app = builder.Build();
 
