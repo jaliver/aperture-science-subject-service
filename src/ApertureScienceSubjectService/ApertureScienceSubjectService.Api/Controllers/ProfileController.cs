@@ -21,14 +21,14 @@ namespace ApertureScienceSubjectService.Api.Controllers
         }
 
         [HttpPost]
-        public ActionResult<ProfileResponse> Create([FromBody] ProfileRequest profileRequest)
+        public async Task<ActionResult<ProfileResponse>> Create([FromBody] ProfileRequest profileRequest)
         {
             if (!_activationCodeService.IsActivationCodeValid(profileRequest.ActivationCode))
             {
                 return BadRequest(new { field = nameof(profileRequest.ActivationCode), message = "Invalid activation code" });
             }
 
-            var profileResponse = _profileService.Create(profileRequest);
+            var profileResponse = await _profileService.Create(profileRequest);
 
             return profileResponse;
         }

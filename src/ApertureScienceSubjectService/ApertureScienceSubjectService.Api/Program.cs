@@ -1,3 +1,4 @@
+using ApertureScienceSubjectService.Api.Cosmos;
 using ApertureScienceSubjectService.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,8 +10,11 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddSingleton(CreateConfiguration());
 builder.Services.AddSingleton<IActivationCodeService, ActivationCodeService>();
-builder.Services.AddSingleton<IProfileService, ProfileService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddScoped(typeof(ICosmosRepository<>), typeof(CosmosRepository<>));
+builder.Services.AddScoped(typeof(ICosmosAdapter<>), typeof(CosmosAdapter<>));
 
 var app = builder.Build();
 
@@ -28,3 +32,9 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+static IConfiguration CreateConfiguration() =>
+    new ConfigurationBuilder()
+        .SetBasePath(Directory.GetCurrentDirectory())
+        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+        .Build();
